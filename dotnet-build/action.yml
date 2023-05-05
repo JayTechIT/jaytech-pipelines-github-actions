@@ -25,8 +25,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - if: inputs.azure-api-key != '' && inputs.azure-api-source != '' && inputs.azure-feed != ''
-      name: Add Azure feed
+    - name: Add Azure feed
       shell: bash
       run: dotnet nuget add source ${{ inputs.azure-feed }} --name ${{inputs.azure-source}} --username az --password ${{ inputs.azure-api-key }} --store-password-in-clear-text      
     - name: .NET Build
