@@ -1,0 +1,70 @@
+name: "dotnet-publish-nuget"
+description: Push each separate .csproj file to either Azure or NuGet as a NuGet package
+inputs:
+  software-version:
+    description: The version of the software (contract, or API, or whatever)
+    required: true
+  dotnet-version:
+    description: Specify which .NET version to use
+    required: false
+    default: "7.x"
+  project-folder:
+    description: Provide project location (full path)
+    required: true
+  azure-api-key:
+    description: Azure API key
+    required: true
+  azure-source:
+    description: Name of the Azure source
+    required: true
+  azure-feed:
+    description: Link of the Azure feed
+    required: true
+  folder-prefix:
+    description: Use if you want to use a folder prefix (ex. 'Assemblies/' so that test projects are skipped)
+    required: false
+    default: ""
+  nuget-api-key:
+    description: NuGet API key
+    required: true
+  nuget-api-source:
+    description: NuGet API source
+    required: false
+    default: "https://api.nuget.org/v3/index.json"
+  nuget:
+    description: Push to nuget?    
+    required: false
+    default: "false"
+runs:
+  using: "composite"
+  steps:
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+    - if: inputs.nuget == 'false'
+      name: Add NuGet Source
+      shell: bash
+      run: dotnet nuget add source ${{ inputs.azure-feed }} --name ${{inputs.azure-source}} --username az --password ${{ inputs.azure-api-key }} --store-password-in-clear-text      
+    - if: inputs.nuget == 'true'
+      name: "Build, pack and push to nuget"
+      shell: bash
+      working-directory: ${{inputs.project-folder}}
+      run: |
+        shopt -s globstar
+        for file in ${{inputs.folder-prefix}}**/*.csproj ; do
+            dotnet build $file --configuration Release            
+            dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
+            dotnet nuget push -k ${{ inputs.nuget-api-key }} $(basename ${file%.*}).${{inputs.software-version}}.nupkg
+        done
+    - if: inputs.nuget == 'false'
+      name: "Build, pack and push to Azure"
+      shell: bash
+      working-directory: ${{inputs.project-folder}}
+      run: |
+        shopt -s globstar
+        for file in ${{inputs.folder-prefix}}**/*.csproj ; do
+            dotnet build $file --configuration Release            
+            dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
+            dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $(basename ${file%.*}).${{inputs.software-version}}.nupkg
+        done
