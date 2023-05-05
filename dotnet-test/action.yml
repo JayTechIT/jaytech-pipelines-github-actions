@@ -1,0 +1,18 @@
+name: .NET Test
+description: Test a .NET solution. Action expect the repository to be prepared as a workflow-artifact (see https://github.com/JayTechNL/jaytech-tools-github-workflows/blob/master/README.md)
+inputs:
+  configuration:
+    description: Select the configuration to run
+    required: false
+    default: Release
+  solution-path:
+    description: Specify the relative path to the .sln file
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: .NET Test
+      shell: bash
+      run: dotnet test ./workflow/repository/${{inputs.solution-path}} -c ${{inputs.configuration}}
