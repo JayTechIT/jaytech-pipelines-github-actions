@@ -1,0 +1,32 @@
+name: GitVersion Semantic Version
+description: Determine a semantic version for a repository
+outputs:
+  semantic-version:
+    description: "Semantic version"
+    value: ${{ steps.semver.outputs.version }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.15
+      with:
+        versionSpec: "5.12.0"
+    - name: Execute GitVersion
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.9.15
+      with:
+        targetPath: "workflow/repository"
+        useConfigFile: true
+        configFilePath: "workflow/repository/GitVersion.yaml"
+    - name: Set GitVersion version
+      id: semver
+      shell: bash
+      run: |
+        if [[ "${{ steps.gitversion.outputs.branchName }}" == "master" ]];
+        then          
+          echo "version=$(echo ${{ steps.gitversion.outputs.major }}.${{ steps.gitversion.outputs.minor }}.${{ steps.gitversion.outputs.patch }})" >> $GITHUB_OUTPUT
+          echo $version
+        else          
+          echo "version=$(echo ${{ steps.gitversion.outputs.major }}.${{ steps.gitversion.outputs.minor }}.${{ steps.gitversion.outputs.patch }}-${{ steps.gitversion.outputs.branchName }}.${{ steps.gitversion.outputs.commitsSinceVersionSource }})" >> $GITHUB_OUTPUT
+          echo $version          
+        fi
