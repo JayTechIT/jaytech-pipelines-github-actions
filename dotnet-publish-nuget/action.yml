@@ -35,6 +35,10 @@ inputs:
     description: Push to nuget?    
     required: false
     default: "false"
+  add-source:
+    description: Add the source within this action or not (set to false in case a workflow also needs to do this)
+    default: "true"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -42,7 +46,7 @@ runs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
-    - if: inputs.nuget == 'false'
+    - if: ${{ (inputs.nuget == 'false') && (inputs.add-source == 'true') }}
       name: Add NuGet Source
       shell: bash
       run: dotnet nuget add source ${{ inputs.azure-feed }} --name ${{inputs.azure-source}} --username az --password ${{ inputs.azure-api-key }} --store-password-in-clear-text      
