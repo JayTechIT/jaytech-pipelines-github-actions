@@ -40,4 +40,4 @@ runs:
         secret-access-key: ${{ inputs.aws-secret-access-key }}
         region: ${{inputs.aws-region}}
         local-image: ${{inputs.container-name}}:${{inputs.software-version}}
-        image: ${{inputs.container-name}}:${{inputs.software-version}}, ${{inputs.container-name}}:latest
+        image: ${{inputs.container-name}}:${{inputs.software-version}}
