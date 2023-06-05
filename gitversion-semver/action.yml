@@ -17,7 +17,7 @@ runs:
       with:
         targetPath: "workflow/repository"
         useConfigFile: true
-        configFilePath: "workflow/repository/GitVersion.yaml"
+        configFilePath: "workflow/repository/GitVersion.yaml"        
     - name: Set GitVersion version
       id: semver
       shell: bash
