@@ -18,6 +18,7 @@ runs:
         targetPath: "workflow/repository"
         useConfigFile: true
         configFilePath: "workflow/repository/GitVersion.yaml"
+        fetch-depth: 0
     - name: Set GitVersion version
       id: semver
       shell: bash
