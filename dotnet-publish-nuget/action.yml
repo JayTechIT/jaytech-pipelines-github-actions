@@ -70,5 +70,5 @@ runs:
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
             dotnet build $file --configuration Release            
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-            dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $(basename ${file%.*}).${{inputs.software-version}}.nupkg
+            dotnet nuget push "$(basename ${file%.*}).${{inputs.software-version}}.nupkg" -s ${{ inputs.azure-source }} --api-key AzureArtifacts 
         done
