@@ -1,0 +1,27 @@
+name: "quasar-build-web"
+description: Build web contents for Quasar
+inputs:
+  folder:
+    description: Folder to use the build command in
+    required: false
+    default: "./workflow/repository"
+runs:
+  using: "composite"
+  steps:
+    - name: Install NodeJS
+      uses: actions/setup-node@v1
+      with:
+        node-version: "16"
+    - name: Quasar Build Web
+      working-directory: ${{inputs.folder}}
+      run: |
+        npm install --unsafe-perm=true --allow-root &&
+        npm install -g @quasar/cli &&
+        npx quasar build
+      shell: bash
+    - name: Upload quasar-web contents      
+      uses: actions/upload-artifact@v1      
+      with:
+        name: quasar-build-web
+        path: ${{inputs.folder}}/dist/spa
+        retention-days: 30
