@@ -23,7 +23,7 @@ runs:
       name: Copy .npmrc
       shell: bash
       run: |
-        cp ${{inputs.folder}}.npmrc ~/.npmrc
+        cp ${{inputs.folder}}/.npmrc ~/.npmrc
     - if: ${{ inputs.scope != '' }}
       shell: bash
       name: Private scope settings
