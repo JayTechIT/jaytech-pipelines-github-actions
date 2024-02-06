@@ -20,12 +20,6 @@ runs:
       with:
         node-version: 18
     - if: ${{ inputs.scope != '' }}
-      name: Copy .npmrc
-      shell: bash
-      run: |
-        cp ${{inputs.folder}}/.npmrc ~/.npmrc
-        cp ${{inputs.folder}}/.yarnrc ~/.yarnrc
-    - if: ${{ inputs.scope != '' }}
       shell: bash
       name: Private scope settings
       working-directory: ${{inputs.folder}}
