@@ -24,6 +24,7 @@ runs:
       name: Private scope settings
       working-directory: ${{inputs.folder}}
       run: |
+        cp ./workflow/repository/.npmrc ~/.npmrc
         npm config set @${{inputs.scope}}:registry ${{inputs.scope-key}}
         npm install --ignore-scripts
     - name: Quasar Build Web
