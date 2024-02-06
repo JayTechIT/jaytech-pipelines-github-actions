@@ -20,11 +20,15 @@ runs:
       with:
         node-version: "16"
     - if: ${{ inputs.scope != '' }}
+      name: Copy .npmrc
+      shell: bash
+      run: |
+        cp ${{inputs.folder}}.npmrc ~/.npmrc
+    - if: ${{ inputs.scope != '' }}
       shell: bash
       name: Private scope settings
       working-directory: ${{inputs.folder}}
       run: |
-        cp ./workflow/repository/.npmrc ~/.npmrc
         npm config set @${{inputs.scope}}:registry ${{inputs.scope-key}}
         npm install --ignore-scripts
     - name: Quasar Build Web
