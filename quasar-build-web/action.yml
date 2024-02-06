@@ -31,7 +31,6 @@ runs:
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
-        yarn
         yarn global add @quasar/cli
         yarn quasar build
       shell: bash
