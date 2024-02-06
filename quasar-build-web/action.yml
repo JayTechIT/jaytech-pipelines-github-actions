@@ -24,9 +24,6 @@ runs:
       run: |
         npm install
         npm i -g @quasar/cli        
-        quasar dev
-        yarn global add @quasar/cli
-        yarn
         quasar build
       shell: bash
     - name: Upload quasar-web contents
