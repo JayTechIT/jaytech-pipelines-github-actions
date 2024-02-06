@@ -31,6 +31,9 @@ runs:
       working-directory: ${{inputs.folder}}
       run: |
         npm config set @${{inputs.scope}}:registry ${{inputs.scope-key}}
+        yarn config set "@jaytech:registry" "https://pkgs.dev.azure.com/JayTechIT/JayTech/_packaging/JayTechUI/npm/registry/"
+        yarn config set "npmRegistries.@jaytech:registry" "https://pkgs.dev.azure.com/JayTechIT/JayTech/_packaging/JayTechUI/npm/registry/"
+        yarn config set "npmAuthToken" "${{inputs.scope-key}}" --scope=@jaytech
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
