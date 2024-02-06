@@ -24,6 +24,7 @@ runs:
       shell: bash
       run: |
         cp ${{inputs.folder}}/.npmrc ~/.npmrc
+        cp ${{inputs.folder}}/.yarnrc ~/.yarnrc
     - if: ${{ inputs.scope != '' }}
       shell: bash
       name: Private scope settings
