@@ -30,7 +30,7 @@ runs:
       working-directory: ${{inputs.folder}}
       run: |
         npm install -g @quasar/cli &&
-        npx quasar build
+        npm quasar build
       shell: bash
     - name: Upload quasar-web contents
       uses: actions/upload-artifact@v1
