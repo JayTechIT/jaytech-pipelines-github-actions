@@ -19,18 +19,13 @@ runs:
       uses: actions/setup-node@v1
       with:
         node-version: 18
-    - if: ${{ inputs.scope != '' }}
-      shell: bash
-      name: Private scope settings
+    - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
         npm config set @${{inputs.scope}}:registry ${{inputs.scope-key}}
         yarn config set "@jaytech:registry" "https://pkgs.dev.azure.com/JayTechIT/JayTech/_packaging/JayTechUI/npm/registry/"
         yarn config set "npmRegistries.@jaytech:registry" "https://pkgs.dev.azure.com/JayTechIT/JayTech/_packaging/JayTechUI/npm/registry/"
         yarn config set "npmAuthToken" "uwybdegg3uewu7c76xs3qukqbmyyezywnvm5e2f7to57mbnv3m2a" --scope=@jaytech
-    - name: Quasar Build Web
-      working-directory: ${{inputs.folder}}
-      run: |
         yarn global add @quasar/cli
         yarn
         quasar build
