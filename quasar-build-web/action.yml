@@ -18,7 +18,7 @@ runs:
     - name: Install NodeJS
       uses: actions/setup-node@v1
       with:
-        node-version: "16"
+        node-version: 18
     - if: ${{ inputs.scope != '' }}
       name: Copy .npmrc
       shell: bash
