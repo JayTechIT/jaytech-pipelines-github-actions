@@ -25,7 +25,7 @@ runs:
         npm config set @${{inputs.scope}}:registry ${{inputs.scope-key}}
         yarn config set "@jaytech:registry" "https://pkgs.dev.azure.com/JayTechIT/JayTech/_packaging/JayTechUI/npm/registry/"
         yarn config set "npmRegistries.@jaytech:registry" "https://pkgs.dev.azure.com/JayTechIT/JayTech/_packaging/JayTechUI/npm/registry/"
-        yarn config set "npmAuthToken" "uwybdegg3uewu7c76xs3qukqbmyyezywnvm5e2f7to57mbnv3m2a" --scope=@jaytech
+        yarn config set "npmAuthToken" "uwybdegg3uewu7c76xs3qukqbmyyezywnvm5e2f7to57mbnv3m2a" --scope=@jaytech --registry "https://pkgs.dev.azure.com/JayTechIT/JayTech/_packaging/JayTechUI/npm/registry/"
         yarn global add @quasar/cli
         yarn
         quasar build
