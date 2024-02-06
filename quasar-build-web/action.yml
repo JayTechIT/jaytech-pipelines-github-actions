@@ -22,6 +22,9 @@ runs:
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
+        npm install
+        npm i -g @quasar/cli        
+        quasar dev
         yarn global add @quasar/cli
         yarn
         quasar build
