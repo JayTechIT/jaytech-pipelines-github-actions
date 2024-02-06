@@ -34,8 +34,9 @@ runs:
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
-        npm install -g @quasar/cli &&
-        quasar build
+        yarn
+        yarn global add @quasar/cli
+        yarn quasar build
       shell: bash
     - name: Upload quasar-web contents
       uses: actions/upload-artifact@v1
