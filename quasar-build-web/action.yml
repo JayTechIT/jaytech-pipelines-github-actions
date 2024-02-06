@@ -5,6 +5,13 @@ inputs:
     description: Folder to use the build command in
     required: false
     default: "./workflow/repository"
+  scope:
+    description: Sync the new version with a -environment repository
+    required: false
+    default: ""
+  scope-key:
+    description: Scope auth key
+    required: false
 runs:
   using: "composite"
   steps:
@@ -12,15 +19,21 @@ runs:
       uses: actions/setup-node@v1
       with:
         node-version: "16"
+    - if: ${{ inputs.scope != '' }}
+      shell: bash
+      name: Private scope settings
+      run: |
+        cp ./workflow/repository/.npmrc ~/.npmrc
+        npm config set @${{inputs.scope}}:registry ${{inputs.scope-key}}
+        npm install --ignore-scripts
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
-        npm install --unsafe-perm=true --allow-root &&
         npm install -g @quasar/cli &&
         npx quasar build
       shell: bash
-    - name: Upload quasar-web contents      
-      uses: actions/upload-artifact@v1      
+    - name: Upload quasar-web contents
+      uses: actions/upload-artifact@v1
       with:
         name: quasar-build-web
         path: ${{inputs.folder}}/dist/spa
