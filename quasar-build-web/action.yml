@@ -30,7 +30,6 @@ runs:
       working-directory: ${{inputs.folder}}
       run: |
         npm config set @${{inputs.scope}}:registry ${{inputs.scope-key}}
-        npm install --ignore-scripts
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
