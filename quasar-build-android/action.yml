@@ -1,0 +1,25 @@
+name: "quasar-build-android"
+description: Android contents for Quasar
+inputs:
+  folder:
+    description: Folder to use the build command in
+    required: false
+    default: "./workflow/repository"
+runs:
+  using: "composite"
+  steps:
+    - name: Install NodeJS
+      uses: actions/setup-node@v1
+      with:
+        node-version: "16"
+    - name: Quasar
+      working-directory: ${{inputs.folder}}
+      shell: bash
+      run: |
+        npm install --unsafe-perm=true --allow-root &&
+        npm install -g @quasar/cli &&
+        npm install -g cordova &&
+        sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/adoptopenjdk-8-hotspot-amd64/bin/javac 100 &&
+        sudo update-alternatives --set javac /usr/lib/jvm/adoptopenjdk-8-hotspot-amd64/bin/javac &&
+        sudo update-alternatives --config javac &&
+        npx quasar build -m cordova -T android --release

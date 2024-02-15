@@ -1,0 +1,18 @@
+name: "quasar-publish-android"
+description: Publish android contents
+inputs:
+  play-store-json:
+    description: JSON for the playstore settings
+    required: true
+  app-id:
+    description: Application id
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Check folder structure
+      run: ls -R -A ./workflow/repository/dist/
+      shell: bash
+    - name: Push to Play Store
+      shell: bash
+      run: fastlane supply --aab 'workflow/repository/dist/cordova/android/bundle/release/app-release.aab' --json_key_data '${{inputs.play-store-json}}' --package_name '${{inputs.app-id}}' --track 'internal'
