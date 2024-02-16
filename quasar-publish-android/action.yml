@@ -9,7 +9,10 @@ inputs:
     required: true
 runs:
   using: "composite"
-  steps:    
+  steps:
+    - name: Check folder structure
+      run: ls -R -A .
+      shell: bash
     - name: Push to Play Store
       shell: bash
       run: fastlane supply --aab 'output/android/android/bundle/release/app-release.aab' --json_key_data '${{inputs.play-store-json}}' --package_name '${{inputs.app-id}}' --track 'internal'
