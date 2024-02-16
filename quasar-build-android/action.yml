@@ -1,6 +1,9 @@
 name: "quasar-build-android"
 description: Build android contents for Quasar
 inputs:
+  app-name: 
+    description: The name of the app (and keystore)
+    required: true
   folder:
     description: Folder to use the build command in
     required: false
@@ -19,6 +22,11 @@ runs:
         npm i -g @quasar/cli
         npm install -g cordova
         quasar build -m cordova -T android --release
+      shell: bash
+    - name: Sign created APK
+      working-directory: ${{inputs.folder}}
+      run: |
+        apksigner.bat sign --ks ./${inputs.app-name}.keystore --min-sdk-version 30 --ks-key-alias ${inputs.app-name} ./dist/cordova/android/bundle/release/app-release.aab
       shell: bash
     - name: Upload quasar-android contents
       uses: actions/upload-artifact@v1
