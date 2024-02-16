@@ -12,11 +12,15 @@ runs:
       uses: actions/setup-node@v1
       with:
         node-version: 18
+    - name: Debug
+      shell: bash
+      run: |
+        update-java-alternatives -l
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
         npm install
-        npm i -g @quasar/cli        
+        npm i -g @quasar/cli                
         quasar build -m cordova -T android --release
       shell: bash
     - name: Upload quasar-web contents
