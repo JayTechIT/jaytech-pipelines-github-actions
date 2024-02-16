@@ -1,5 +1,5 @@
-name: "quasar-build-web"
-description: Build web contents for Quasar
+name: "quasar-build-android"
+description: Build android contents for Quasar
 inputs:
   folder:
     description: Folder to use the build command in
@@ -12,7 +12,7 @@ runs:
       uses: actions/setup-node@v1
       with:
         node-version: 18
-    - name: Quasar Build Web
+    - name: Quasar Build Android
       working-directory: ${{inputs.folder}}
       run: |
         npm install
@@ -20,7 +20,7 @@ runs:
         npm install -g cordova
         quasar build -m cordova -T android --release
       shell: bash
-    - name: Upload quasar-web contents
+    - name: Upload quasar-android contents
       uses: actions/upload-artifact@v1
       with:
         name: quasar-build-android
