@@ -1,29 +1,27 @@
-name: "quasar-build-android"
-description: Android contents for Quasar
+name: "quasar-build-web"
+description: Build web contents for Quasar
 inputs:
   folder:
-    description: "Folder to use the build command in"
+    description: Folder to use the build command in
     required: false
     default: "./workflow/repository"
 runs:
   using: "composite"
   steps:
     - name: Install NodeJS
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v1
       with:
-        node-version: "16"
-        
-    - name: Set up JDK 8
-      uses: actions/setup-java@v2
-      with:
-        java-version: '8'
-        distribution: 'temurin'  # Using Temurin for Java 8
-        
-    - name: Quasar Build for Android
+        node-version: 18
+    - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
-      shell: bash
       run: |
-        npm install --unsafe-perm=true --allow-root
-        npm install -g @quasar/cli
-        npm install -g cordova
-        npx quasar build -m cordova -T android --release
+        npm install
+        npm i -g @quasar/cli        
+        quasar build -m cordova -T android --release
+      shell: bash
+    - name: Upload quasar-web contents
+      uses: actions/upload-artifact@v1
+      with:
+        name: quasar-build-android
+        path: ${{inputs.folder}}/dist/cordova/android/bundle/release/
+        retention-days: 30
