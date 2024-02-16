@@ -28,7 +28,7 @@ runs:
       shell: bash
     - name: Sign the app bundle
       run: |
-        jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${{inputs.folder}}/${{inputs.app-name}}.keystore -signedjar app-release-signed.aab ${{inputs.folder}}/dist/cordova/android/bundle/release/app-release.aab ${{inputs.app-name}} -storepass "${{inputs.key-store-password}}"
+        jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${{inputs.folder}}/${{inputs.app-name}}.keystore -signedjar ${{inputs.folder}}/dist/cordova/android/bundle/release/app-release-signed.aab ${{inputs.folder}}/dist/cordova/android/bundle/release/app-release.aab ${{inputs.app-name}} -storepass "${{inputs.key-store-password}}"
       shell: bash
     - name: Upload quasar-android contents
       uses: actions/upload-artifact@v1
