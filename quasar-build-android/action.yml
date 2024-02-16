@@ -24,5 +24,5 @@ runs:
       uses: actions/upload-artifact@v1
       with:
         name: quasar-build-android
-        path: ${{inputs.folder}}/dist/cordova/android/bundle/release/
+        path: ${{inputs.folder}}/dist/cordova
         retention-days: 30
