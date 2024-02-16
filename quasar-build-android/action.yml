@@ -26,7 +26,7 @@ runs:
     - name: Sign created APK
       working-directory: ${{inputs.folder}}
       run: |
-        apksigner.bat sign --ks ./${inputs.app-name}.keystore --min-sdk-version 30 --ks-key-alias ${inputs.app-name} ./dist/cordova/android/bundle/release/app-release.aab
+        apksigner.bat sign --ks ./${{inputs.app-name}}.keystore --min-sdk-version 30 --ks-key-alias ${{inputs.app-name}} ./dist/cordova/android/bundle/release/app-release.aab
       shell: bash
     - name: Upload quasar-android contents
       uses: actions/upload-artifact@v1
