@@ -29,9 +29,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set Project Version in All .csproj Files
+      working-directory: workflow/repository/${{inputs.additional-path}}
+      run: |
+        find . -type f -name '*.csproj' -exec sed -i 's|<Version>.*</Version>|<Version>${{ inputs.software-version }}</Version>|' {} \;
+      shell: bash
     - name: Build Docker Image
       shell: bash
-      run: docker build --build-arg VERSION=${{inputs.software-version}} -t ${{inputs.container-name}}:${{inputs.software-version}} workflow/repository/${{inputs.additional-path}}
+      run: docker build -t ${{inputs.container-name}}:${{inputs.software-version}} workflow/repository/${{inputs.additional-path}}
     - name: Push to ECR
       id: ecr
       uses: jwalton/gh-ecr-push@v1
