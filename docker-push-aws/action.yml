@@ -28,12 +28,7 @@ inputs:
     default: ""
 runs:
   using: "composite"
-  steps:
-    - name: Set Project Version in All .csproj Files
-      working-directory: workflow/repository/${{inputs.additional-path}}
-      run: |
-        find . -type f -name '*.csproj' -exec sed -i 's|<Version>.*</Version>|<Version>${{ inputs.software-version }}</Version>|' {} \;
-      shell: bash
+  steps:    
     - name: Build Docker Image
       shell: bash
       run: docker build -t ${{inputs.container-name}}:${{inputs.software-version}} workflow/repository/${{inputs.additional-path}}
