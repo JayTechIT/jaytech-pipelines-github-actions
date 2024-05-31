@@ -2,9 +2,6 @@ name: "GitHub Clean Prerelease Versions"
 description: "Cleans up prerelease versions for a specified version on GitHub (tag + release)"
 author: "JayTechIT"
 inputs:
-  owner:
-    description: "The repository owner"
-    required: true
   repo:
     description: "The repository name"
     required: true
@@ -22,22 +19,20 @@ runs:
       run: |
         set -e  # Exit immediately if a command exits with a non-zero status
 
-        owner="${{ inputs.owner }}"
         repo="${{ inputs.repo }}"
         token="${{ inputs.token }}"
         specifiedVersion="${{ inputs.specifiedVersion }}"
 
-        echo "Owner: $owner"
         echo "Repository: $repo"
         echo "Specified Version: $specifiedVersion"
 
         # Authenticate with GitHub CLI
         echo $token | gh auth login --with-token
 
-        echo "Fetching tags from $owner/$repo"
+        echo "Fetching tags from $repo"
 
         # Get all tags
-        tags=$(gh api -H "Accept: application/vnd.github.v3+json" repos/$owner/$repo/tags)
+        tags=$(gh api -H "Accept: application/vnd.github.v3+json" repos/$repo/tags)
 
         # Ensure tags is valid JSON
         if ! echo "$tags" | jq empty; then
@@ -58,14 +53,14 @@ runs:
             if [[ $normalizedTag =~ ^$specifiedVersion- ]]; then
                 echo "Tag $tagName is a pre-release of $specifiedVersion"
                 # Get the release by tag name
-                release=$(gh api -H "Accept: application/vnd.github.v3+json" repos/$owner/$repo/releases/tags/$tagName)
+                release=$(gh api -H "Accept: application/vnd.github.v3+json" repos/$repo/releases/tags/$tagName)
 
                 releaseId=$(echo "$release" | jq -r '.id')
 
                 if [ "$releaseId" != "null" ]; then
                     echo "Deleting release with ID: $releaseId"
                     # Delete the release
-                    gh api -X DELETE repos/$owner/$repo/releases/$releaseId
+                    gh api -X DELETE repos/$repo/releases/$releaseId
                     echo "Deleted release $(echo "$release" | jq -r '.name')"
                 else
                     echo "No release found for tag $tagName or it might already be deleted."
@@ -73,7 +68,7 @@ runs:
 
                 echo "Deleting tag reference: $tagName"
                 # Delete the tag reference
-                gh api -X DELETE repos/$owner/$repo/git/refs/tags/$tagName
+                gh api -X DELETE repos/$repo/git/refs/tags/$tagName
                 echo "Deleted tag $tagName"
             else
                 echo "Tag $tagName is not a pre-release of $specifiedVersion"
