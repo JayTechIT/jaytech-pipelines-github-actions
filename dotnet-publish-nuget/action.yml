@@ -57,13 +57,11 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            echo "Processing file: $file"
-            dotnet build "$file" --configuration Release
-            if grep -q '<IsPackable>true</IsPackable>' "$file"; then
-                echo "Packing file: $file"
+            if grep -q '<Packable>true</Packable>' "$file"; then
+                echo "Processing file: $file"
+                dotnet build $file --configuration Release            
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-                PACKAGE_FILE=$(basename "${file%.csproj}").${{inputs.software-version}}.nupkg
-                PACKAGE_FILE="${PACKAGE_FILE/.Package/}"
+                PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
                 echo "Pushing package: $PACKAGE_FILE"
                 dotnet nuget push -k ${{ inputs.nuget-api-key }} $PACKAGE_FILE
             else
@@ -78,13 +76,11 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            echo "Processing file: $file"
-            dotnet build "$file" --configuration Release
-            if grep -q '<IsPackable>true</IsPackable>' "$file"; then
-                echo "Packing file: $file"
+            if grep -q '<Packable>true</Packable>' "$file"; then
+                echo "Processing file: $file"
+                dotnet build $file --configuration Release            
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-                PACKAGE_FILE=$(basename "${file%.csproj}").${{inputs.software-version}}.nupkg
-                PACKAGE_FILE="${PACKAGE_FILE/.Package/}"
+                PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
                 echo "Pushing package: $PACKAGE_FILE"
                 dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $PACKAGE_FILE --skip-duplicate
             else
