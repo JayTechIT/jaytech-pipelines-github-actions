@@ -57,13 +57,16 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            echo "Processing file: $file"
-            dotnet build $file --configuration Release            
-            dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-            PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
-            CORRECTED_PACKAGE_FILE=$(echo $PACKAGE_FILE | sed 's/\.Package//')
-            echo "Pushing package: $CORRECTED_PACKAGE_FILE"
-            dotnet nuget push -k ${{ inputs.nuget-api-key }} $CORRECTED_PACKAGE_FILE
+            if grep -q '<Packable>true</Packable>' "$file"; then
+                echo "Processing file: $file"
+                dotnet build $file --configuration Release            
+                dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
+                PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
+                echo "Pushing package: $PACKAGE_FILE"
+                dotnet nuget push -k ${{ inputs.nuget-api-key }} $PACKAGE_FILE
+            else
+                echo "Skipping non-packable project: $file"
+            fi
         done
     
     - if: inputs.nuget == 'false'
@@ -73,12 +76,16 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            echo "Processing file: $file"
-            dotnet build $file --configuration Release            
-            dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-            PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
-            CORRECTED_PACKAGE_FILE=$(echo $PACKAGE_FILE | sed 's/\.Package//')
-            echo "Pushing package: $CORRECTED_PACKAGE_FILE"
-            dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $CORRECTED_PACKAGE_FILE --skip-duplicate
+            if grep -q '<Packable>true</Packable>' "$file"; then
+                echo "Processing file: $file"
+                dotnet build $file --configuration Release            
+                dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
+                PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
+                echo "Pushing package: $PACKAGE_FILE"
+                dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $PACKAGE_FILE --skip-duplicate
+            else
+                echo "Skipping non-packable project: $file"
+            fi
         done
+
 
