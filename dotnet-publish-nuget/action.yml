@@ -57,9 +57,12 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
+            echo "Processing file: $file"
             dotnet build $file --configuration Release            
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-            dotnet nuget push -k ${{ inputs.nuget-api-key }} $(basename ${file%.*}).${{inputs.software-version}}.nupkg
+            PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
+            echo "Pushing package: $PACKAGE_FILE"
+            dotnet nuget push -k ${{ inputs.nuget-api-key }} $PACKAGE_FILE
         done
     - if: inputs.nuget == 'false'
       name: "Build, pack and push to Azure"
@@ -68,7 +71,10 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
+            echo "Processing file: $file"
             dotnet build $file --configuration Release            
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-            dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $(basename ${file%.*}).${{inputs.software-version}}.nupkg --skip-duplicate
+            PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
+            echo "Pushing package: $PACKAGE_FILE"
+            dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $PACKAGE_FILE --skip-duplicate
         done
