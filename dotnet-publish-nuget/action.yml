@@ -57,9 +57,10 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
+            echo "Processing file: $file"
+            dotnet build "$file" --configuration Release
             if grep -q '<IsPackable>true</IsPackable>' "$file"; then
-                echo "Processing file: $file"
-                dotnet build $file --configuration Release            
+                echo "Packing file: $file"
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
                 PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
                 echo "Pushing package: $PACKAGE_FILE"
@@ -76,9 +77,10 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
+            echo "Processing file: $file"
+            dotnet build "$file" --configuration Release
             if grep -q '<IsPackable>true</IsPackable>' "$file"; then
-                echo "Processing file: $file"
-                dotnet build $file --configuration Release            
+                echo "Packing file: $file"
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
                 PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
                 echo "Pushing package: $PACKAGE_FILE"
@@ -87,5 +89,6 @@ runs:
                 echo "Skipping non-packable project: $file"
             fi
         done
+
 
 
