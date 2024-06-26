@@ -61,7 +61,7 @@ runs:
             dotnet build $file --configuration Release            
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
             PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
-            CORRECTED_PACKAGE_FILE=$(echo $PACKAGE_FILE | sed -E 's/\.Package([0-9]+\.[0-9]+\.[0-9]+.*)/\1/')
+            CORRECTED_PACKAGE_FILE=$(echo $PACKAGE_FILE | sed 's/\.Package//')
             echo "Pushing package: $CORRECTED_PACKAGE_FILE"
             dotnet nuget push -k ${{ inputs.nuget-api-key }} $CORRECTED_PACKAGE_FILE
         done
@@ -77,7 +77,8 @@ runs:
             dotnet build $file --configuration Release            
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
             PACKAGE_FILE=$(basename ${file%.*}).${{inputs.software-version}}.nupkg
-            CORRECTED_PACKAGE_FILE=$(echo $PACKAGE_FILE | sed -E 's/\.Package([0-9]+\.[0-9]+\.[0-9]+.*)/\1/')
+            CORRECTED_PACKAGE_FILE=$(echo $PACKAGE_FILE | sed 's/\.Package//')
             echo "Pushing package: $CORRECTED_PACKAGE_FILE"
             dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $CORRECTED_PACKAGE_FILE --skip-duplicate
         done
+
