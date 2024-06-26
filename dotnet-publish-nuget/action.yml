@@ -57,7 +57,7 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            if grep -q '<Packable>true</Packable>' "$file"; then
+            if grep -q '<IsPackable>true</IsPackable>' "$file"; then
                 echo "Processing file: $file"
                 dotnet build $file --configuration Release            
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
@@ -76,7 +76,7 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            if grep -q '<Packable>true</Packable>' "$file"; then
+            if grep -q '<IsPackable>true</IsPackable>' "$file"; then
                 echo "Processing file: $file"
                 dotnet build $file --configuration Release            
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
