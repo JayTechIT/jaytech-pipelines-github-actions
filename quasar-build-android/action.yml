@@ -31,7 +31,7 @@ runs:
         jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${{inputs.folder}}/${{inputs.app-name}}.keystore -signedjar ${{inputs.folder}}/dist/cordova/android/bundle/release/app-release-signed.aab ${{inputs.folder}}/dist/cordova/android/bundle/release/app-release.aab ${{inputs.app-name}} -storepass "${{inputs.key-store-password}}"
       shell: bash
     - name: Upload quasar-android contents
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       with:
         name: quasar-build-android
         path: ${{inputs.folder}}/dist/cordova
