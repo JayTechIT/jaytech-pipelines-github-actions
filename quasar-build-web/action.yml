@@ -17,6 +17,8 @@ runs:
       run: |
         npm install
         npm i -g @quasar/cli
+        # Run ESLint but ignore errors
+        npm run lint || true
         quasar build
       shell: bash
     - name: Upload quasar-web contents
