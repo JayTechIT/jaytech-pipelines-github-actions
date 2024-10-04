@@ -2,7 +2,7 @@ name: GitHub Clean Tags & Releases
 description: Clean up GitHub Tags & Releases based on the current build's semantic version.
 inputs:
   keep:
-    description: "The number of releases to keep that are lower than the current semantic version"
+    description: "The number of releases to keep that are lower than or equal to the current semantic version"
     required: false
     default: "10"
   semantic-version:
@@ -38,7 +38,7 @@ runs:
 
         echo "Major: $MAJOR, Minor: $MINOR, Patch: $PATCH"
 
-        # Remove pre-releases for this version and all older versions
+        # Delete pre-releases that are older than the provided version
         while IFS=',' read -r TAG PRERELEASE RELEASE_ID; do
           # Split version into major.minor.patch (e.g., 2.1.5-beta)
           TAG_MAJOR=$(echo $TAG | cut -d'.' -f1)
@@ -58,14 +58,14 @@ runs:
           fi
         done < releases.csv
 
-    - name: Keep X Latest Non-Pre-Releases Lower Than Current Version
+    - name: Keep X Latest Non-Pre-Releases Lower Than or Equal to Current Version
       id: clean_up_releases
       shell: bash
       run: |
         SEMVER="${{ inputs.semantic-version }}"
         KEEP=${{ inputs.keep }}
 
-        # Collect non-prerelease versions that are lower than the current version
+        # Collect non-prerelease versions that are older than or equal to the current version
         NON_PRERELEASE_TAGS=()
         NON_PRERELEASE_IDS=()
         while IFS=',' read -r TAG PRERELEASE RELEASE_ID; do
@@ -73,19 +73,19 @@ runs:
           TAG_MINOR=$(echo $TAG | cut -d'.' -f2)
           TAG_PATCH=$(echo $TAG | cut -d'.' -f3 | cut -d'-' -f1)
 
-          # Filter out non-prereleases that are lower than the current version
+          # Add non-prereleases that are lower or equal to the current version
           if [ "$PRERELEASE" == "false" ]; then
             if [[ "$TAG_MAJOR" -lt "$MAJOR" || ( "$TAG_MAJOR" -eq "$MAJOR" && "$TAG_MINOR" -lt "$MINOR" ) || \
-                  ( "$TAG_MAJOR" -eq "$MAJOR" && "$TAG_MINOR" -eq "$MINOR" && "$TAG_PATCH" -lt "$PATCH" ) ]]; then
+                  ( "$TAG_MAJOR" -eq "$MAJOR" && "$TAG_MINOR" -eq "$MINOR" && "$TAG_PATCH" -le "$PATCH" ) ]]; then
               NON_PRERELEASE_TAGS+=($TAG)
               NON_PRERELEASE_IDS+=($RELEASE_ID)
             fi
           fi
         done < releases.csv
 
-        echo "Found ${#NON_PRERELEASE_TAGS[@]} non-prerelease versions lower than $SEMVER"
+        echo "Found ${#NON_PRERELEASE_TAGS[@]} non-prerelease versions older than or equal to $SEMVER"
 
-        # If we have more than the keep limit, delete the extra older versions
+        # Sort tags and ensure we keep the latest X versions, including the provided version
         if [ "${#NON_PRERELEASE_TAGS[@]}" -gt "$KEEP" ]; then
           DELETE_COUNT=$((${#NON_PRERELEASE_TAGS[@]} - $KEEP))
 
