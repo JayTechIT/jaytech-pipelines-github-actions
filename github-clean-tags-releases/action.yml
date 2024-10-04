@@ -23,6 +23,13 @@ runs:
           | jq -r '.[] | "\(.tag_name),\(.prerelease),\(.id)"' > releases.csv
       shell: bash
 
+    - name: Debug release versions
+      id: debug_versions
+      run: |
+        echo "Fetched releases:"
+        cat releases.csv
+      shell: bash
+
     - name: Parse Semantic Version and Remove Pre-Releases
       id: remove_prereleases
       shell: bash
@@ -30,20 +37,22 @@ runs:
         SEMVER="${{ inputs.semantic-version }}"
         
         echo "Current version: $SEMVER"
-        
-        # Split major.minor.patch
+
+        # Convert semantic version to individual components
         MAJOR=$(echo $SEMVER | cut -d'.' -f1)
         MINOR=$(echo $SEMVER | cut -d'.' -f2)
         PATCH=$(echo $SEMVER | cut -d'.' -f3)
 
         echo "Major: $MAJOR, Minor: $MINOR, Patch: $PATCH"
 
-        # Delete pre-releases that are older than the provided version
+        # Iterate over releases and delete pre-releases that are older than the provided version
         while IFS=',' read -r TAG PRERELEASE RELEASE_ID; do
-          # Split version into major.minor.patch (e.g., 2.1.5-beta)
+          # Extract the version components from the tag
           TAG_MAJOR=$(echo $TAG | cut -d'.' -f1)
           TAG_MINOR=$(echo $TAG | cut -d'.' -f2)
           TAG_PATCH=$(echo $TAG | cut -d'.' -f3 | cut -d'-' -f1)
+
+          echo "Checking release: $TAG (prerelease: $PRERELEASE)"
 
           # If it's a pre-release AND the version is less than or equal to the current
           if [ "$PRERELEASE" == "true" ]; then
@@ -65,13 +74,19 @@ runs:
         SEMVER="${{ inputs.semantic-version }}"
         KEEP=${{ inputs.keep }}
 
-        # Collect non-prerelease versions that are older than or equal to the current version
+        # Initialize arrays to store non-prerelease versions
         NON_PRERELEASE_TAGS=()
         NON_PRERELEASE_IDS=()
+
+        echo "Processing non-prerelease versions lower than or equal to $SEMVER"
+
         while IFS=',' read -r TAG PRERELEASE RELEASE_ID; do
+          # Extract the version components from the tag
           TAG_MAJOR=$(echo $TAG | cut -d'.' -f1)
           TAG_MINOR=$(echo $TAG | cut -d'.' -f2)
           TAG_PATCH=$(echo $TAG | cut -d'.' -f3 | cut -d'-' -f1)
+
+          echo "Checking release: $TAG (prerelease: $PRERELEASE)"
 
           # Add non-prereleases that are lower or equal to the current version
           if [ "$PRERELEASE" == "false" ]; then
@@ -83,9 +98,9 @@ runs:
           fi
         done < releases.csv
 
-        echo "Found ${#NON_PRERELEASE_TAGS[@]} non-prerelease versions older than or equal to $SEMVER"
+        echo "Found ${#NON_PRERELEASE_TAGS[@]} non-prerelease versions lower than or equal to $SEMVER"
 
-        # Sort tags and ensure we keep the latest X versions, including the provided version
+        # If we have more than the keep limit, delete the extra older versions
         if [ "${#NON_PRERELEASE_TAGS[@]}" -gt "$KEEP" ]; then
           DELETE_COUNT=$((${#NON_PRERELEASE_TAGS[@]} - $KEEP))
 
