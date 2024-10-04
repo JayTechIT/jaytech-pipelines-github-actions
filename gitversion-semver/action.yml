@@ -7,6 +7,9 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Check folder structure
+      run: ls -R -A workflow/repository
+      shell: bash
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@v0.9.15
       with:
@@ -17,16 +20,16 @@ runs:
       with:
         targetPath: "workflow/repository"
         useConfigFile: true
-        configFilePath: "workflow/repository/GitVersion.yaml"        
+        configFilePath: "workflow/repository/GitVersion.yaml"
     - name: Set GitVersion version
       id: semver
       shell: bash
       run: |
         if [[ "${{ steps.gitversion.outputs.branchName }}" == "master" ]];
-        then          
+        then
           echo "version=$(echo ${{ steps.gitversion.outputs.major }}.${{ steps.gitversion.outputs.minor }}.${{ steps.gitversion.outputs.patch }})" >> $GITHUB_OUTPUT
           echo $version
-        else          
+        else
           echo "version=$(echo ${{ steps.gitversion.outputs.major }}.${{ steps.gitversion.outputs.minor }}.${{ steps.gitversion.outputs.patch }}-${{ steps.gitversion.outputs.branchName }}.${{ steps.gitversion.outputs.commitsSinceVersionSource }})" >> $GITHUB_OUTPUT
-          echo $version          
+          echo $version
         fi
