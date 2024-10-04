@@ -1,0 +1,64 @@
+name: GitHub Clean Tags & Releases
+description: Clean up GitHub Tags & Releases
+inputs:
+  keep:
+    description: |
+      The amount of releases to keep. The action will clean up releases older than release 'keep'
+    required: false
+    default: "10"
+runs:
+  using: "composite"
+  steps:
+    - name: Get Tags
+      id: get_tags
+      run: |
+        curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/tags \
+          | jq -r '.[] | .name' > tags.txt
+      shell: bash
+
+    - name: Get Releases
+      id: get_releases
+      run: |
+        curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/releases \
+          | jq -r '.[] | .tag_name' > releases.txt
+      shell: bash
+
+    - name: Keep only the latest ${{ inputs.keep }} tags and releases
+      id: clean_up
+      shell: bash
+      run: |
+        # Get all tags and releases
+        TAGS=$(cat tags.txt)
+        RELEASES=$(cat releases.txt)
+
+        # Get the number of most recent tags and releases to keep
+        KEEP=${{ inputs.keep }}
+
+        # Get the most recent tags and releases (that we want to KEEP)
+        KEEP_TAGS=$(echo "$TAGS" | head -n $KEEP)
+        KEEP_RELEASES=$(echo "$RELEASES" | head -n $KEEP)
+
+        echo "Keeping the following tags:"
+        echo "$KEEP_TAGS"
+
+        echo "Keeping the following releases:"
+        echo "$KEEP_RELEASES"
+
+        # Loop through the releases and delete any older ones beyond the $KEEP most recent
+        for release in $(echo "$RELEASES" | tail -n +$(($KEEP + 1))); do
+          echo "Deleting release: $release"
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/$release \
+            | jq -r '.id')
+          curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
+        done
+
+        # Now delete all tags except the $KEEP most recent
+        for tag in $(echo "$TAGS" | tail -n +$(($KEEP + 1))); do
+          echo "Deleting tag: $tag"
+          curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag
+        done
