@@ -50,7 +50,22 @@ runs:
         for release in $(echo "$RELEASES" | tail -n +$(($KEEP + 1))); do
           echo "Deleting release: $release"
           RELEASE_ID=$(curl -s -H "Authorization: token ${{ github.token}}" \
-            https://api.github.com/repos/${{ github.repository }}/releases/tags/$release \
-            | jq -r '.id')
-          curl -s -X DELETE
+            https://api.github.com/repos/${{ github.repository }}/releases \
+            | jq -r --arg release "$release" '.[] | select(.tag_name == $release) | .id')
+
+          if [ -n "$RELEASE_ID" ]; then
+            curl -s -X DELETE -H "Authorization: token ${{ github.token}}" \
+              https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
+            echo "Deleted release $release (ID: $RELEASE_ID)"
+          else
+            echo "Release ID not found for tag $release"
+          fi
+        done
+
+        # Now delete all tags except the $KEEP most recent
+        for tag in $(echo "$TAGS" | tail -n +$(($KEEP + 1))); do
+          echo "Deleting tag: $tag"
+          curl -s -X DELETE -H "Authorization: token ${{ github.token}}" \
+            https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag
+          echo "Deleted tag $tag"
         done
