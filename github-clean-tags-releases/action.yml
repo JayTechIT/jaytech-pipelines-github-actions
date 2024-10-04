@@ -53,3 +53,4 @@ runs:
             https://api.github.com/repos/${{ github.repository }}/releases/tags/$release \
             | jq -r '.id')
           curl -s -X DELETE
+        done
