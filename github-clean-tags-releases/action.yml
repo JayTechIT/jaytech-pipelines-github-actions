@@ -85,14 +85,18 @@ runs:
 
         echo "Found ${#NON_PRERELEASE_TAGS[@]} non-prerelease versions lower than or equal to $SEMVER"
 
+        # Sort the tags in reverse (so that the oldest versions come first)
+        NON_PRERELEASE_TAGS_REVERSED=($(echo "${NON_PRERELEASE_TAGS[@]}" | tr ' ' '\n' | sort -Vr))
+        NON_PRERELEASE_IDS_REVERSED=($(echo "${NON_PRERELEASE_IDS[@]}" | tr ' ' '\n' | sort -Vr))
+
         # If we have more than the keep limit, delete the extra older versions
-        if [ "${#NON_PRERELEASE_TAGS[@]}" -gt "$KEEP" ]; then
-          DELETE_COUNT=$((${#NON_PRERELEASE_TAGS[@]} - $KEEP))
+        if [ "${#NON_PRERELEASE_TAGS_REVERSED[@]}" -gt "$KEEP" ]; then
+          DELETE_COUNT=$((${#NON_PRERELEASE_TAGS_REVERSED[@]} - $KEEP))
 
           echo "Deleting $DELETE_COUNT non-prerelease versions older than $SEMVER"
           for (( i=0; i<DELETE_COUNT; i++ )); do
-            TAG=${NON_PRERELEASE_TAGS[$i]}
-            RELEASE_ID=${NON_PRERELEASE_IDS[$i]}
+            TAG=${NON_PRERELEASE_TAGS_REVERSED[$i]}
+            RELEASE_ID=${NON_PRERELEASE_IDS_REVERSED[$i]}
             echo "Deleting non-prerelease version: $TAG (ID: $RELEASE_ID)"
             curl -s -X DELETE -H "Authorization: token ${{ inputs.token}}" \
               https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
