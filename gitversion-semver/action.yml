@@ -7,9 +7,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Check folder structure
-      run: ls -R -A workflow/repository
-      shell: bash
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@v0.9.15
       with:

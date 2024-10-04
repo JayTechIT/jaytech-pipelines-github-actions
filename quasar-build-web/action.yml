@@ -11,12 +11,12 @@ runs:
     - name: Install NodeJS
       uses: actions/setup-node@v1
       with:
-        node-version: 18
+        node-version: 20
     - name: Quasar Build Web
       working-directory: ${{inputs.folder}}
       run: |
         npm install
-        npm i -g @quasar/cli        
+        npm i -g @quasar/cli
         quasar build
       shell: bash
     - name: Upload quasar-web contents

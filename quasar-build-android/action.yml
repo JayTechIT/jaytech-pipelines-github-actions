@@ -17,7 +17,7 @@ runs:
     - name: Install NodeJS
       uses: actions/setup-node@v1
       with:
-        node-version: 18
+        node-version: 20
     - name: Quasar Build Android
       working-directory: ${{inputs.folder}}
       run: |
