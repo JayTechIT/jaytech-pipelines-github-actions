@@ -17,13 +17,24 @@ runs:
     - name: Fetch All Releases (with pagination)
       id: get_releases
       run: |
+        # Initialize the CSV file
+        echo "" > releases.csv
+
+        # Loop through pages until there are no more releases
         PAGE=1
-        while [ $(curl -s -H "Authorization: token ${{ inputs.token}}" \
-          -I https://api.github.com/repos/${{ github.repository }}/releases?per_page=100&page=$PAGE \
-          | grep "Link:") ]; do
-          curl -s -H "Authorization: token ${{ inputs.token}}" \
-            https://api.github.com/repos/${{ github.repository }}/releases?per_page=100&page=$PAGE \
-            | jq -r '.[] | "\(.tag_name),\(.id)"' >> releases.csv
+        while true; do
+          RESPONSE=$(curl -s -H "Authorization: token ${{ inputs.token}}" \
+            https://api.github.com/repos/${{ github.repository }}/releases?per_page=100&page=$PAGE)
+          
+          # Break the loop if no releases are returned
+          if [ "$(echo "$RESPONSE" | jq '. | length')" -eq "0" ]; then
+            break
+          fi
+
+          # Append releases to the CSV
+          echo "$RESPONSE" | jq -r '.[] | "\(.tag_name),\(.id)"' >> releases.csv
+
+          # Increment page counter
           PAGE=$((PAGE + 1))
         done
       shell: bash
