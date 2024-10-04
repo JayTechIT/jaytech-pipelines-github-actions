@@ -1,74 +1,102 @@
 name: GitHub Clean Tags & Releases
-description: Clean up GitHub Tags & Releases
+description: Clean up GitHub Tags & Releases based on the current build's semantic version.
 inputs:
   keep:
-    description: |
-      The amount of releases to keep. The action will clean up releases older than release 'keep'
+    description: "The number of releases to keep that are lower than the current semantic version"
     required: false
     default: "10"
+  semantic-version:
+    description: "The current semantic version (e.g., 2.1.5) of the master build"
+    required: true
   token:
     description: "The GitHub personal access token"
     required: true
 runs:
   using: "composite"
   steps:
-    - name: Get Tags
-      id: get_tags
-      run: |
-        curl -s -H "Authorization: token ${{ inputs.token}}" \
-          https://api.github.com/repos/${{ github.repository }}/tags \
-          | jq -r '.[] | .name' > tags.txt
-      shell: bash
-
-    - name: Get Releases
+    - name: Get Releases (with pre-release info)
       id: get_releases
       run: |
+        # Fetch all releases with their tag_name, prerelease status, and ID
         curl -s -H "Authorization: token ${{ inputs.token}}" \
           https://api.github.com/repos/${{ github.repository }}/releases \
-          | jq -r '.[] | .tag_name' > releases.txt
+          | jq -r '.[] | "\(.tag_name),\(.prerelease),\(.id)"' > releases.csv
       shell: bash
 
-    - name: Keep only the latest ${{ inputs.keep }} tags and releases
-      id: clean_up
+    - name: Parse Semantic Version and Remove Pre-Releases
+      id: remove_prereleases
       shell: bash
       run: |
-        # Get all tags and releases
-        TAGS=$(cat tags.txt)
-        RELEASES=$(cat releases.txt)
+        SEMVER="${{ inputs.semantic-version }}"
+        
+        echo "Current version: $SEMVER"
+        
+        # Split major.minor.patch
+        MAJOR=$(echo $SEMVER | cut -d'.' -f1)
+        MINOR=$(echo $SEMVER | cut -d'.' -f2)
+        PATCH=$(echo $SEMVER | cut -d'.' -f3)
 
-        # Get the number of most recent tags and releases to keep
+        echo "Major: $MAJOR, Minor: $MINOR, Patch: $PATCH"
+
+        # Remove pre-releases for this version and all older versions
+        while IFS=',' read -r TAG PRERELEASE RELEASE_ID; do
+          # Split version into major.minor.patch (e.g., 2.1.5-beta)
+          TAG_MAJOR=$(echo $TAG | cut -d'.' -f1)
+          TAG_MINOR=$(echo $TAG | cut -d'.' -f2)
+          TAG_PATCH=$(echo $TAG | cut -d'.' -f3 | cut -d'-' -f1)
+
+          # If it's a pre-release AND the version is less than or equal to the current
+          if [ "$PRERELEASE" == "true" ]; then
+            if [[ "$TAG_MAJOR" -lt "$MAJOR" || ( "$TAG_MAJOR" -eq "$MAJOR" && "$TAG_MINOR" -lt "$MINOR" ) || \
+                  ( "$TAG_MAJOR" -eq "$MAJOR" && "$TAG_MINOR" -eq "$MINOR" && "$TAG_PATCH" -le "$PATCH" ) ]]; then
+              echo "Deleting pre-release $TAG (ID: $RELEASE_ID)"
+              curl -s -X DELETE -H "Authorization: token ${{ inputs.token}}" \
+                https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
+              curl -s -X DELETE -H "Authorization: token ${{ inputs.token}}" \
+                https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$TAG
+            fi
+          fi
+        done < releases.csv
+
+    - name: Keep X Latest Non-Pre-Releases Lower Than Current Version
+      id: clean_up_releases
+      shell: bash
+      run: |
+        SEMVER="${{ inputs.semantic-version }}"
         KEEP=${{ inputs.keep }}
 
-        # Get the most recent tags and releases (that we want to KEEP)
-        KEEP_TAGS=$(echo "$TAGS" | head -n $KEEP)
-        KEEP_RELEASES=$(echo "$RELEASES" | head -n $KEEP)
+        # Collect non-prerelease versions that are lower than the current version
+        NON_PRERELEASE_TAGS=()
+        NON_PRERELEASE_IDS=()
+        while IFS=',' read -r TAG PRERELEASE RELEASE_ID; do
+          TAG_MAJOR=$(echo $TAG | cut -d'.' -f1)
+          TAG_MINOR=$(echo $TAG | cut -d'.' -f2)
+          TAG_PATCH=$(echo $TAG | cut -d'.' -f3 | cut -d'-' -f1)
 
-        echo "Keeping the following tags:"
-        echo "$KEEP_TAGS"
+          # Filter out non-prereleases that are lower than the current version
+          if [ "$PRERELEASE" == "false" ]; then
+            if [[ "$TAG_MAJOR" -lt "$MAJOR" || ( "$TAG_MAJOR" -eq "$MAJOR" && "$TAG_MINOR" -lt "$MINOR" ) || \
+                  ( "$TAG_MAJOR" -eq "$MAJOR" && "$TAG_MINOR" -eq "$MINOR" && "$TAG_PATCH" -lt "$PATCH" ) ]]; then
+              NON_PRERELEASE_TAGS+=($TAG)
+              NON_PRERELEASE_IDS+=($RELEASE_ID)
+            fi
+          fi
+        done < releases.csv
 
-        echo "Keeping the following releases:"
-        echo "$KEEP_RELEASES"
+        echo "Found ${#NON_PRERELEASE_TAGS[@]} non-prerelease versions lower than $SEMVER"
 
-        # Loop through the releases and delete any older ones beyond the $KEEP most recent
-        for release in $(echo "$RELEASES" | tail -n +$(($KEEP + 1))); do
-          echo "Deleting release: $release"
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ inputs.token}}" \
-            https://api.github.com/repos/${{ github.repository }}/releases \
-            | jq -r --arg release "$release" '.[] | select(.tag_name == $release) | .id')
+        # If we have more than the keep limit, delete the extra older versions
+        if [ "${#NON_PRERELEASE_TAGS[@]}" -gt "$KEEP" ]; then
+          DELETE_COUNT=$((${#NON_PRERELEASE_TAGS[@]} - $KEEP))
 
-          if [ -n "$RELEASE_ID" ]; then
+          echo "Deleting $DELETE_COUNT non-prerelease versions older than $SEMVER"
+          for (( i=0; i<DELETE_COUNT; i++ )); do
+            TAG=${NON_PRERELEASE_TAGS[$i]}
+            RELEASE_ID=${NON_PRERELEASE_IDS[$i]}
+            echo "Deleting non-prerelease version: $TAG (ID: $RELEASE_ID)"
             curl -s -X DELETE -H "Authorization: token ${{ inputs.token}}" \
               https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
-            echo "Deleted release $release (ID: $RELEASE_ID)"
-          else
-            echo "Release ID not found for tag $release"
-          fi
-        done
-
-        # Now delete all tags except the $KEEP most recent
-        for tag in $(echo "$TAGS" | tail -n +$(($KEEP + 1))); do
-          echo "Deleting tag: $tag"
-          curl -s -X DELETE -H "Authorization: token ${{ inputs.token}}" \
-            https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$tag
-          echo "Deleted tag $tag"
-        done
+            curl -s -X DELETE -H "Authorization: token ${{ inputs.token}}" \
+              https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$TAG
+          done
+        fi
