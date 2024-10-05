@@ -1,7 +1,7 @@
 name: "quasar-build-android"
 description: Build android contents for Quasar
 inputs:
-  app-name:
+  app-name: 
     description: The name of the app (and keystore)
     required: true
   folder:
@@ -12,9 +12,9 @@ inputs:
     description: The key-store password
     required: true
   mode:
-    description: Choose build mode; capacitor or cordova
+    description: Build mode: capacitor or cordova
     required: false
-    default: "capacitor"
+    default: "capacitor"  # Defaults to capacitor, can be overridden to cordova
 
 runs:
   using: "composite"
@@ -36,6 +36,13 @@ runs:
         fi
       shell: bash
 
+    - name: Setup Gradle
+      working-directory: ${{inputs.folder}}/src-capacitor/android
+      run: |
+        sudo apt-get install -y gradle
+        chmod +x ./gradlew
+      shell: bash
+
     - name: Quasar Build Android
       working-directory: ${{inputs.folder}}
       run: |
@@ -46,14 +53,20 @@ runs:
         fi
       shell: bash
 
+    - name: Run Gradle Assemble
+      working-directory: ${{inputs.folder}}/src-capacitor/android
+      run: |
+        ./gradlew assembleRelease
+      shell: bash
+
     - name: Sign the app bundle
       run: |
         if [ "${{inputs.mode}}" == "cordova" ]; then
           BUNDLE_PATH="${{inputs.folder}}/dist/cordova/android/bundle/release/app-release.aab"
           SIGNED_BUNDLE_PATH="${{inputs.folder}}/dist/cordova/android/bundle/release/app-release-signed.aab"
         else
-          BUNDLE_PATH="${{inputs.folder}}/android/app/build/outputs/bundle/release/app-release.aab"
-          SIGNED_BUNDLE_PATH="${{inputs.folder}}/android/app/build/outputs/bundle/release/app-release-signed.aab"
+          BUNDLE_PATH="${{inputs.folder}}/src-capacitor/android/app/build/outputs/bundle/release/app-release.aab"
+          SIGNED_BUNDLE_PATH="${{inputs.folder}}/src-capacitor/android/app/build/outputs/bundle/release/app-release-signed.aab"
         fi
 
         jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${{inputs.folder}}/${{inputs.app-name}}.keystore -signedjar $SIGNED_BUNDLE_PATH $BUNDLE_PATH ${{inputs.app-name}} -storepass "${{inputs.key-store-password}}"
@@ -67,5 +80,5 @@ runs:
           if [ "${{inputs.mode}}" == "cordova" ]; then
             ${{inputs.folder}}/dist/cordova
           else
-            ${{inputs.folder}}/android/app/build/outputs
+            ${{inputs.folder}}/src-capacitor/android/app/build/outputs
         retention-days: 30
