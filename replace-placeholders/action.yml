@@ -20,7 +20,7 @@ runs:
         cd ${{inputs.directory}}
         IFS='~' read -ra SEARCH <<< "${{ inputs.replacements-in }}"
         IFS='~' read -ra REPLACE <<< "${{ inputs.replacements-out }}"
-        for index in ${!SEARCH[*]}; do 
-          echo "Replacing ${SEARCH[$index]} with ${REPLACE[$index]}"                        
+        for index in ${!SEARCH[*]}; do
+          echo "Replacing ${SEARCH[$index]} with ${REPLACE[$index]}"
           grep -rl ${SEARCH[$index]} ./ | xargs sed -i s~${SEARCH[$index]}~${REPLACE[$index]}~g
         done
