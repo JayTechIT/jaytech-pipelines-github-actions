@@ -1,7 +1,7 @@
 name: "quasar-build-android"
 description: Build android contents for Quasar
 inputs:
-  app-name: 
+  app-name:
     description: The name of the app (and keystore)
     required: true
   folder:
@@ -12,7 +12,7 @@ inputs:
     description: The key-store password
     required: true
   mode:
-    description: Build mode: capacitor or cordova
+    description: Switch build mode; capacitor or cordova
     required: false
     default: "capacitor"  # Defaults to capacitor, can be overridden to cordova
 
