@@ -12,9 +12,9 @@ inputs:
     description: The key-store password
     required: true
   mode:
-    description: Switch build mode; capacitor or cordova
+    description: Switch mode; capacitor or cordova
     required: false
-    default: "capacitor"  # Defaults to capacitor, can be overridden to cordova
+    default: "capacitor" # Defaults to capacitor, can be overridden to cordova
 
 runs:
   using: "composite"
@@ -23,6 +23,12 @@ runs:
       uses: actions/setup-node@v1
       with:
         node-version: 20
+
+    - name: Set up Java 17
+      uses: actions/setup-java@v1
+      with:
+        java-version: "17"
+        distribution: "temurin"
 
     - name: Install Dependencies
       working-directory: ${{inputs.folder}}
