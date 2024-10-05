@@ -75,7 +75,7 @@ runs:
           SIGNED_BUNDLE_PATH="${{inputs.folder}}/src-capacitor/android/app/build/outputs/bundle/release/app-release-signed.aab"
         fi
 
-        jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${{inputs.folder}}/${{inputs.app-name}}.keystore -signedjar $SIGNED_BUNDLE_PATH $BUNDLE_PATH ${{inputs.app-name}} -storepass "${{inputs.key-store-password}}"
+        jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore ${{inputs.folder}}/${{inputs.app-name}}.keystore -signedjar $SIGNED_BUNDLE_PATH $BUNDLE_PATH ${{inputs.app-name}} -storepass "${{inputs.key-store-password}}"
       shell: bash
 
     - name: Upload quasar-android contents
