@@ -57,9 +57,15 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            dotnet build $file --configuration Release            
-            dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-            dotnet nuget push -k ${{ inputs.nuget-api-key }} $(basename ${file%.*}).${{inputs.software-version}}.nupkg
+            # Check if the project is packable
+            is_packable=$(grep -i '<IsPackable>false</IsPackable>' "$file")
+            if [ -z "$is_packable" ]; then
+                dotnet build "$file" --configuration Release            
+                dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
+                dotnet nuget push -k ${{ inputs.nuget-api-key }} $(basename ${file%.*}).${{inputs.software-version}}.nupkg
+            else
+                echo "Skipping pack for non-packable project: $file"
+            fi
         done
     - if: inputs.nuget == 'false'
       name: "Build, pack and push to Azure"
@@ -68,7 +74,14 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            dotnet build $file --configuration Release            
-            dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
-            dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $(basename ${file%.*}).${{inputs.software-version}}.nupkg --skip-duplicate
+            # Check if the project is packable
+            is_packable=$(grep -i '<IsPackable>false</IsPackable>' "$file")
+            if [ -z "$is_packable" ]; then
+                dotnet build "$file" --configuration Release            
+                dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
+                dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $(basename ${file%.*}).${{inputs.software-version}}.nupkg --skip-duplicate
+            else
+                echo "Skipping pack for non-packable project: $file"
+            fi
         done
+
