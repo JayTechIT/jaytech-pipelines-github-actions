@@ -57,9 +57,11 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            # Check if the project is packable
-            is_packable=$(grep -i '<IsPackable>false</IsPackable>' "$file")
-            if [ -z "$is_packable" ]; then
+            echo "Processing project file: $file"
+            # Check if the project is packable using dotnet msbuild
+            is_packable=$(dotnet msbuild "$file" -property:IsPackable | grep true)
+            if [ -n "$is_packable" ]; then
+                echo "Building and packing project: $file"
                 dotnet build "$file" --configuration Release            
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
                 dotnet nuget push -k ${{ inputs.nuget-api-key }} $(basename ${file%.*}).${{inputs.software-version}}.nupkg
@@ -74,9 +76,11 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj ; do
-            # Check if the project is packable
-            is_packable=$(grep -i '<IsPackable>false</IsPackable>' "$file")
-            if [ -z "$is_packable" ]; then
+            echo "Processing project file: $file"
+            # Check if the project is packable using dotnet msbuild
+            is_packable=$(dotnet msbuild "$file" -property:IsPackable | grep true)
+            if [ -n "$is_packable" ]; then
+                echo "Building and packing project: $file"
                 dotnet build "$file" --configuration Release            
                 dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c "Release" --output .
                 dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts $(basename ${file%.*}).${{inputs.software-version}}.nupkg --skip-duplicate
@@ -84,4 +88,5 @@ runs:
                 echo "Skipping pack for non-packable project: $file"
             fi
         done
+
 
