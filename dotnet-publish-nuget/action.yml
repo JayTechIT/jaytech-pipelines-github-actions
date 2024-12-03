@@ -64,8 +64,8 @@ runs:
       name: Download Icon
       shell: bash
       run: |
-        echo "Downloading icon from ${inputs.icon-url}"
-        curl -fSL "${inputs.icon-url}" -o icon.png
+        echo "Downloading icon from ${{inputs.icon-url}}"
+        curl -fSL "${{inputs.icon-url}}" -o icon.png
 
     - if: ${{ (inputs.nuget == 'false') && (inputs.add-source == 'true') }}
       name: Add NuGet Source
