@@ -39,10 +39,6 @@ inputs:
     description: Add the source within this action or not (set to false in case a workflow also needs to do this)
     default: "true"
     required: false
-  icon-url:
-    description: HTTP URL to the icon file
-    required: false
-    default: ""
 runs:
   using: "composite"
   steps:
@@ -60,13 +56,6 @@ runs:
           sudo yum install -y libxml2
         fi
 
-    - if: ${{ inputs.icon-url != '' }}
-      name: Download Icon
-      shell: bash
-      run: |
-        echo "Downloading icon from ${{inputs.icon-url}}"
-        curl -fSL "${{inputs.icon-url}}" -o icon.png
-
     - if: ${{ (inputs.nuget == 'false') && (inputs.add-source == 'true') }}
       name: Add NuGet Source
       shell: bash
@@ -79,26 +68,21 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj; do
+          # Extract the value of the IsPackable property from the .csproj file
           IS_PACKABLE=$(xmllint --xpath "string(//IsPackable)" "$file" 2>/dev/null)
           echo "File: $file | IsPackable value: '$IS_PACKABLE'"
-          
+    
+          # Check if IsPackable is explicitly set to false
           if [ "$IS_PACKABLE" != "false" ]; then
             echo "Processing $file"
-  
-            # Add icon to csproj dynamically if downloaded
-            if [ -f icon.png ]; then
-              sed -i '/<\/PropertyGroup>/i \ \ <PackageIcon>icon.png</PackageIcon>' "$file"
-              echo "Added PackageIcon to $file"
-            fi
-  
-            dotnet build "$file" --configuration Release
+            dotnet build "$file" --configuration Release            
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c Release --output .
             dotnet nuget push -k ${{ inputs.nuget-api-key }} "$(basename "${file%.*}").${{inputs.software-version}}.nupkg"
           else
             echo "Skipping $file as IsPackable is set to false"
           fi
         done
-  
+    
     - if: inputs.nuget == 'false'
       name: "Build, pack and push to Azure"
       shell: bash
@@ -106,23 +90,17 @@ runs:
       run: |
         shopt -s globstar
         for file in ${{inputs.folder-prefix}}**/*.csproj; do
+          # Extract the value of the IsPackable property from the .csproj file
           IS_PACKABLE=$(xmllint --xpath "string(//IsPackable)" "$file" 2>/dev/null)
           echo "File: $file | IsPackable value: '$IS_PACKABLE'"
-  
+    
+          # Check if IsPackable is explicitly set to false
           if [ "$IS_PACKABLE" != "false" ]; then
             echo "Processing $file"
-  
-            # Add icon to csproj dynamically if downloaded
-            if [ -f icon.png ]; then
-              sed -i '/<\/PropertyGroup>/i \ \ <PackageIcon>icon.png</PackageIcon>' "$file"
-              echo "Added PackageIcon to $file"
-            fi
-  
-            dotnet build "$file" --configuration Release
+            dotnet build "$file" --configuration Release            
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c Release --output .
             dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts "$(basename "${file%.*}").${{inputs.software-version}}.nupkg" --skip-duplicate
           else
             echo "Skipping $file as IsPackable is set to false"
           fi
         done
-
