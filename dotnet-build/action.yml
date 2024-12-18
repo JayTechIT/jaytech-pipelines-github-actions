@@ -13,11 +13,11 @@ inputs:
     description: Azure API key
     required: false
     default: ""
-  azure-feed: 
+  azure-feed:
     description: Azure feed
     required: false
     default: ""
-  azure-source: 
+  azure-source:
     description: Azure source link in case private NuGet packages need to be fetched
     required: false
     default: ""

@@ -32,7 +32,7 @@ inputs:
     required: false
     default: "https://api.nuget.org/v3/index.json"
   nuget:
-    description: Push to nuget?    
+    description: Push to nuget?
     required: false
     default: "false"
   add-source:
@@ -46,7 +46,6 @@ runs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
-    
     - name: Install xmllint
       shell: bash
       run: |
@@ -55,12 +54,10 @@ runs:
         elif command -v yum &> /dev/null; then
           sudo yum install -y libxml2
         fi
-
     - if: ${{ (inputs.nuget == 'false') && (inputs.add-source == 'true') }}
       name: Add NuGet Source
       shell: bash
       run: dotnet nuget add source ${{ inputs.azure-feed }} --name ${{inputs.azure-source}} --username az --password ${{ inputs.azure-api-key }} --store-password-in-clear-text      
-
     - if: inputs.nuget == 'true'
       name: "Build, pack and push to NuGet"
       shell: bash
@@ -71,18 +68,17 @@ runs:
           # Extract the value of the IsPackable property from the .csproj file
           IS_PACKABLE=$(xmllint --xpath "string(//IsPackable)" "$file" 2>/dev/null)
           echo "File: $file | IsPackable value: '$IS_PACKABLE'"
-    
+
           # Check if IsPackable is explicitly set to false
           if [ "$IS_PACKABLE" != "false" ]; then
             echo "Processing $file"
-            dotnet build "$file" --configuration Release            
+            dotnet build "$file" --configuration Release
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c Release --output .
             dotnet nuget push -k ${{ inputs.nuget-api-key }} "$(basename "${file%.*}").${{inputs.software-version}}.nupkg"
           else
             echo "Skipping $file as IsPackable is set to false"
           fi
         done
-    
     - if: inputs.nuget == 'false'
       name: "Build, pack and push to Azure"
       shell: bash
@@ -93,11 +89,11 @@ runs:
           # Extract the value of the IsPackable property from the .csproj file
           IS_PACKABLE=$(xmllint --xpath "string(//IsPackable)" "$file" 2>/dev/null)
           echo "File: $file | IsPackable value: '$IS_PACKABLE'"
-    
+
           # Check if IsPackable is explicitly set to false
           if [ "$IS_PACKABLE" != "false" ]; then
             echo "Processing $file"
-            dotnet build "$file" --configuration Release            
+            dotnet build "$file" --configuration Release
             dotnet pack "$file" -p:PackageVersion=${{inputs.software-version}} -c Release --output .
             dotnet nuget push -s ${{ inputs.azure-source }} --api-key AzureArtifacts "$(basename "${file%.*}").${{inputs.software-version}}.nupkg" --skip-duplicate
           else
