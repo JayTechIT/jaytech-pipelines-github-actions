@@ -43,7 +43,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
     - name: Install xmllint
