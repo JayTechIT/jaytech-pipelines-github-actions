@@ -79,7 +79,7 @@ runs:
       shell: bash
 
     - name: Upload quasar-android contents
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: quasar-build-android
         path: |
