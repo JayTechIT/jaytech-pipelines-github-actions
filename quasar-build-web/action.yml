@@ -22,7 +22,7 @@ runs:
         quasar build
       shell: bash
     - name: Upload quasar-web contents
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: quasar-build-web
         path: ${{inputs.folder}}/dist/spa
