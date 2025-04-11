@@ -1,0 +1,43 @@
+name: "Retrieve JayTech Secrets Map"
+description: "Retrieves multiple secrets and sets dynamic outputs based on a JSON map"
+
+inputs:
+  jaytech-credential-key:
+    description: "Credential Key used to authenticate"
+    required: true
+  secret-map:
+    description: |
+      JSON string mapping output keys to secret names.
+      Example: { "pat-github": "PAT_GITHUB", "replacements-out": "AZURE_API_KEY_BASE_64" }
+    required: true
+
+outputs: {} # We will emit outputs dynamically using GITHUB_OUTPUT
+
+runs:
+  using: "composite"
+  steps:
+    - name: Parse map and fetch secrets
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        JAYTECH_SECRET_ID="${{ inputs.jaytech-credential-key }}"
+        SECRET_MAP_JSON="${{ inputs.secret-map }}"
+
+        # Parse JSON using jq
+        echo "$SECRET_MAP_JSON" | jq -r 'to_entries[] | "\(.key)|\(.value)"' | while IFS='|' read -r OUTPUT_KEY SECRET_NAME; do
+          echo "Retrieving secret '$SECRET_NAME' for output '$OUTPUT_KEY'..."
+
+          RESPONSE=$(curl -s -w "%{http_code}" -o response.txt \
+            -H "jaytech-credential-key: $JAYTECH_SECRET_ID" \
+            "https://authorization-center.jaytech.nl/v3/secrets/${SECRET_NAME}")
+
+          if [[ "$RESPONSE" != "200" ]]; then
+            echo "Failed to fetch secret '$SECRET_NAME'. HTTP $RESPONSE"
+            cat response.txt
+            exit 1
+          fi
+
+          VALUE=$(cat response.txt | sed 's/"/\\"/g')
+          echo "${OUTPUT_KEY}=${VALUE}" >> "$GITHUB_OUTPUT"
+        done
