@@ -5,10 +5,7 @@ inputs:
   jaytech-credential-key:
     description: "Credential Key used to authenticate"
     required: true
-  output-key:
-    description: "Name of the output (e.g., AZURE_API_KEY)"
-    required: true
-  secret-name:
+  secret:
     description: "Name of the JayTech-managed secret (e.g., MY_SECRET_ID)"
     required: true
 
@@ -40,5 +37,5 @@ runs:
 
         VALUE=$(cat .secret-value.txt | sed 's/"/\\"/g')
 
-        echo "✅ Secret fetched. Setting output '${{ inputs.output-key }}'"
+        echo "✅ Secret fetched. Setting output. "
         echo "secret_out=$VALUE" >> "$GITHUB_OUTPUT"
