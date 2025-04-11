@@ -1,0 +1,39 @@
+name: "Retrieve JayTech Secret"
+description: "Retrieves a single secret from the JayTech secret store"
+
+inputs:
+  jaytech-credential-key:
+    description: "Credential Key used to authenticate"
+    required: true
+  secret-name:
+    description: "The key of the secret to retrieve"
+    required: true
+
+outputs:
+  value:
+    description: "The secret value"
+    value: ${{ steps.retrieve.outputs.value }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Retrieve secret
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        JAYTECH_SECRET_ID="${{ inputs.jaytech-credential-key }}"
+        SECRET_NAME="${{ inputs.secret-name }}"
+
+        RESPONSE=$(curl -s -w "%{http_code}" -o response.txt \
+          -H "jaytech-credential-key: $JAYTECH_SECRET_ID" \
+          "https://authorization-center.jaytech.nl/v3/secrets/${SECRET_NAME}")
+
+        if [[ "$RESPONSE" != "200" ]]; then
+          echo "Failed to retrieve secret '${SECRET_NAME}', HTTP $RESPONSE"
+          cat response.txt
+          exit 1
+        fi
+
+        SECRET_VALUE=$(cat response.txt | sed 's/"/\\"/g')
+        echo "value=${SECRET_VALUE}" >> "$GITHUB_OUTPUT"
