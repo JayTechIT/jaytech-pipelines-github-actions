@@ -1,0 +1,49 @@
+name: "JayTech: Bump Version via Auth Center"
+description: "Sends version bump request to Authorization Center API"
+
+inputs:
+  jaytech-credential-key:
+    required: true
+    description: "Secret token for Authorization Center"
+  type:
+    required: true
+    description: "Type of the app (api | ui)"
+  org:
+    required: true
+    description: "GitHub org"
+  repo:
+    required: true
+    description: "Target repository"
+  version:
+    required: true
+    description: "Version to bump to"
+  message:
+    required: true
+    description: "Commit message"
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "Syncing environment via JayTech"
+
+        response=$(curl -s -o response.txt -w "%{http_code}" -X POST "https://authorization-center.jaytech.nl/github/sync-environment" \
+          -H "Content-Type: application/json" \
+          -H "jaytech-credential-key: ${{ inputs.jaytech-credential-key }}" \
+          -d "$(jq -n \
+              --arg type "${{ inputs.type }}" \
+              --arg org "${{ inputs.org }}" \
+              --arg repo "${{ inputs.repo }}" \
+              --arg version "${{ inputs.version }}" \
+              --arg message "${{ inputs.message }}" \
+              '{type: $type, org: $org, repo: $repo, version: $version, message: $message}')")
+
+        if [ "$response" -ne 204 ]; then
+          echo "❌ Sync failed with status $response"
+          echo "🔍 Response body:"
+          cat response.txt
+          exit 1
+        fi
+
+        echo "✅ Sync completed (HTTP $response)"
+      shell: bash

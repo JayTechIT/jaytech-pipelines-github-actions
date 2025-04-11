@@ -1,0 +1,68 @@
+name: "Retrieve JayTech Secrets"
+description: "Retrieves multiple secrets and returns a map of raw values with escaped quotes."
+
+inputs:
+  jaytech-credential-key:
+    description: "Credential Key used to authenticate"
+    required: true
+  secret_in:
+    description: |
+      JSON string mapping output keys to secret names. (escape double quotes!)
+      Example: { "ci_token": "SOME_CI_TOKEN", "api_key": "XYZ_SECRET" }
+    required: true
+
+outputs:
+  secret_out:
+    description: "A JSON object with output keys and properly escaped raw secret values"
+    value: ${{ steps.resolve.outputs.secret_out }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Parse and retrieve secrets
+      id: resolve
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        JAYTECH_SECRET_ID="${{ inputs.jaytech-credential-key }}"
+        SECRET_MAP_JSON="${{ inputs.secret_in }}"
+
+        echo "$SECRET_MAP_JSON" > .secret_in.json
+
+        jq -e . .secret_in.json > /dev/null || {
+          echo "❌ Invalid JSON passed in 'secret_in'"
+          cat .secret_in.json
+          exit 1
+        }
+
+        OUTPUT_JSON="{}"
+        while IFS='|' read -r OUTPUT_KEY SECRET_NAME; do
+          echo "🔑 Fetching $SECRET_NAME → $OUTPUT_KEY"
+
+          RESPONSE=$(curl -s -w "%{http_code}" -o .secret-value.txt \
+            -H "jaytech-credential-key: $JAYTECH_SECRET_ID" \
+            "https://api.authorization-center.jaytech.nl/v3/secrets/${SECRET_NAME}")
+
+          if [[ "$RESPONSE" != "200" ]]; then
+            echo "❌ Failed to fetch secret '${SECRET_NAME}'. HTTP $RESPONSE"
+            cat .secret-value.txt
+            exit 1
+          fi
+
+          # Read value and escape double quotes
+          RAW_VALUE=$(cat .secret-value.txt | sed 's/"/\\"/g')
+
+          TMP_FILE=$(mktemp)
+          echo "$OUTPUT_JSON" | jq --arg k "$OUTPUT_KEY" --arg v "$RAW_VALUE" '. + {($k): $v}' > "$TMP_FILE"
+          OUTPUT_JSON=$(cat "$TMP_FILE")
+        done < <(jq -r 'to_entries[] | "\(.key)|\(.value)"' .secret_in.json)
+
+        echo "✅ Secrets retrieved successfully:"
+        echo "$OUTPUT_JSON" | jq
+
+        # Collapse JSON to a single line and escape it
+        ESCAPED_JSON=$(echo "$OUTPUT_JSON" | jq -c . | sed 's/"/\\"/g')
+
+        # Set as a proper string in GitHub's expected format
+        echo "secret_out=\"$ESCAPED_JSON\"" >> "$GITHUB_OUTPUT"
