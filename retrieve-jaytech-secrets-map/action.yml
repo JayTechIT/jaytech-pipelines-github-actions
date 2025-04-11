@@ -21,23 +21,37 @@ runs:
       run: |
         set -euo pipefail
 
+        echo "📦 Parsing secret map..."
         JAYTECH_SECRET_ID="${{ inputs.jaytech-credential-key }}"
         SECRET_MAP_JSON="${{ inputs.secret-map }}"
 
-        # Parse JSON using jq
-        echo "$SECRET_MAP_JSON" | jq -r 'to_entries[] | "\(.key)|\(.value)"' | while IFS='|' read -r OUTPUT_KEY SECRET_NAME; do
-          echo "Retrieving secret '$SECRET_NAME' for output '$OUTPUT_KEY'..."
+        # Debug input (escaped)
+        echo "🔍 Raw secret map input:"
+        echo "$SECRET_MAP_JSON" | cat -A
 
-          RESPONSE=$(curl -s -w "%{http_code}" -o response.txt \
+        echo "$SECRET_MAP_JSON" > .secret-map.json
+
+        jq -e . .secret-map.json > /dev/null || {
+          echo "❌ Invalid JSON passed in 'secret-map'"
+          cat .secret-map.json
+          exit 1
+        }
+
+        jq -r 'to_entries[] | "\(.key)|\(.value)"' .secret-map.json | while IFS='|' read -r OUTPUT_KEY SECRET_NAME; do
+          echo "🔑 Retrieving secret '$SECRET_NAME' for output '$OUTPUT_KEY'..."
+
+          RESPONSE=$(curl -s -w "%{http_code}" -o .secret-value.txt \
             -H "jaytech-credential-key: $JAYTECH_SECRET_ID" \
             "https://authorization-center.jaytech.nl/v3/secrets/${SECRET_NAME}")
 
           if [[ "$RESPONSE" != "200" ]]; then
-            echo "Failed to fetch secret '$SECRET_NAME'. HTTP $RESPONSE"
-            cat response.txt
+            echo "❌ Failed to fetch secret '${SECRET_NAME}'. HTTP $RESPONSE"
+            cat .secret-value.txt
             exit 1
           fi
 
-          VALUE=$(cat response.txt | sed 's/"/\\"/g')
-          echo "${OUTPUT_KEY}=${VALUE}" >> "$GITHUB_OUTPUT"
+          VALUE_ESCAPED=$(cat .secret-value.txt | sed 's/"/\\"/g')
+          echo "${OUTPUT_KEY}=${VALUE_ESCAPED}" >> "$GITHUB_OUTPUT"
         done
+
+        echo "✅ All secrets retrieved successfully."
