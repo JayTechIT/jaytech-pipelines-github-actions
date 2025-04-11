@@ -27,7 +27,7 @@ runs:
     - run: |
         echo "Syncing environment via JayTech"
 
-        response=$(curl -s -o response.txt -w "%{http_code}" -X POST "https://authorization-center.jaytech.nl/github/sync-environment" \
+        response=$(curl -s -o response.txt -w "%{http_code}" -X POST "https://api.authorization-center.jaytech.nl/v3/github/sync-environment" \
           -H "Content-Type: application/json" \
           -H "jaytech-credential-key: ${{ inputs.jaytech-credential-key }}" \
           -d "$(jq -n \
