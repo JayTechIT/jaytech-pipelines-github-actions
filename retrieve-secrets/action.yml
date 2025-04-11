@@ -65,4 +65,4 @@ runs:
         ESCAPED_JSON=$(echo "$OUTPUT_JSON" | jq -c . | sed 's/"/\\"/g')
 
         # Set as a proper string in GitHub's expected format
-        echo "secret_out=\"$ESCAPED_JSON\"" >> "$GITHUB_OUTPUT"
+        echo "secret_out=$ESCAPED_JSON" >> "$GITHUB_OUTPUT"
