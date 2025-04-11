@@ -23,14 +23,14 @@ runs:
       run: |
         set -euo pipefail
 
-        echo "🔐 Fetching secret '${{ inputs.secret-name }}'"
+        echo "🔐 Fetching secret '${{ inputs.secret }}'"
 
         RESPONSE=$(curl -s -w "%{http_code}" -o .secret-value.txt \
           -H "jaytech-credential-key: ${{ inputs.jaytech-credential-key }}" \
-          "https://api.authorization-center.jaytech.nl/v3/secrets/${{ inputs.secret-name }}")
+          "https://api.authorization-center.jaytech.nl/v3/secrets/${{ inputs.secret }}")
 
         if [[ "$RESPONSE" != "200" ]]; then
-          echo "❌ Failed to fetch secret '${{ inputs.secret-name }}'. HTTP $RESPONSE"
+          echo "❌ Failed to fetch secret '${{ inputs.secret }}'. HTTP $RESPONSE"
           cat .secret-value.txt
           exit 1
         fi
