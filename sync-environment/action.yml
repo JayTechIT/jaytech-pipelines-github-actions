@@ -38,12 +38,11 @@ runs:
               --arg message "${{ inputs.message }}" \
               '{type: $type, org: $org, repo: $repo, version: $version, message: $message}')")
 
-        if [ "$response" -ne 204 ]; then
-          echo "❌ Sync failed with status $response"
-          echo "🔍 Response body:"
-          cat response.txt
+        if [ "$response" -ne 200 ] && [ "$response" -ne 204 ]; then
+          echo "❌ Unexpected response: $response"
           exit 1
         fi
+
 
         echo "✅ Sync completed (HTTP $response)"
       shell: bash
