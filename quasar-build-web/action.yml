@@ -8,10 +8,11 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Debug full file tree of input folder
+    - name: Debug full file tree (including dotfiles)
       run: |
         echo "Full file tree of: ${{ inputs.folder }}"
-        find "${{ inputs.folder }}"
+        shopt -s dotglob
+        find "${{ inputs.folder }}" -type f
       shell: bash
 
     - name: Use project-level .npmrc if present
