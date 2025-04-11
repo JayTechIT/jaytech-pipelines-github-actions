@@ -39,24 +39,6 @@ runs:
     - name: Build Docker Image
       shell: bash
       run: docker build -t ${{inputs.container-name}}:${{inputs.software-version}} workflow/repository/${{inputs.additional-path}}
-    - name: 🔍 Validate AWS credentials manually
-      run: |
-        aws sts get-caller-identity --region ${{ inputs.aws-region }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-        AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
-      shell: bash
-    - name: Login to ECR manually
-      run: |
-        aws ecr get-login-password \
-          --region ${{ inputs.aws-region }} \
-          | docker login --username AWS \
-          --password-stdin <your-account-id>.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-      shell: bash
     - name: Push to ECR
       id: ecr
       uses: jwalton/gh-ecr-push@v1
