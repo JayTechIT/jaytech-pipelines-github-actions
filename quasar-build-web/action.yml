@@ -8,6 +8,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Debug full file tree of input folder
+      run: |
+        echo "Full file tree of: ${{ inputs.folder }}"
+        find "${{ inputs.folder }}"
+      shell: bash
+
     - name: Use project-level .npmrc if present
       run: |
         if [ -f "${{ inputs.folder }}/.npmrc" ]; then
