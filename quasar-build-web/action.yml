@@ -8,6 +8,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Use project-level .npmrc if present
+      run: |
+        if [ -f "${{ inputs.folder }}/.npmrc" ]; then
+          echo "Using repo .npmrc"
+          cp "${{ inputs.folder }}/.npmrc" ~/.npmrc
+        else
+          echo "No .npmrc found in project"
+        fi
+      shell: bash
     - name: Install NodeJS
       uses: actions/setup-node@v1
       with:
